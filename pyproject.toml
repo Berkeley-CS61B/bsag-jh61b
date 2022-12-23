@@ -1,0 +1,57 @@
+[tool.poetry]
+name = "bsag_jh61b"
+version = "0.1.0"
+description = "jh61b steps for BSAG"
+authors = ["CS 61B Staff <cs61b@berkeley.edu>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pathspec = "^0.10.2"
+loguru = "^0.6.0"
+pydantic = "^1.10.2"
+devtools = "^0.10.0"
+bsag = {path = "../BSAG"}
+
+[tool.poetry.group.dev.dependencies]
+black = "*"
+mypy = "*"
+ruff = "*"
+loguru-mypy = "^0.0.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins."bsag"]
+jh61b = "bsag_jh61b._plugin"
+
+[tool.black]
+color = true
+line-length = 120
+target-version = ['py310']
+preview = true
+
+[tool.isort]
+line_length = 120
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+combine_as_imports = true
+profile = "black"
+
+[tool.mypy]
+python_version = "3.10"
+show_error_codes = true
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+# Pylance and mypy conflict here (error vs ignore) with a partial unknown
+module = "bsag_jh61b.checkstyle_jar"
+warn_unused_ignores = false
+
+[tool.ruff]
+line-length = 120
+extend-select = ["UP", "Q"]
