@@ -9,17 +9,14 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 pathspec = "^0.10.2"
-loguru = "^0.6.0"
 pydantic = "^1.10.4"
-devtools = "^0.10.0"
 bsag = {git = "https://github.com/Berkeley-CS61B/BSAG.git"}
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
 mypy = "*"
 ruff = "*"
-loguru-mypy = "^0.0.4"
-isort = "^5.11.4"
+isort = "*"
 
 [build-system]
 requires = ["poetry-core"]
