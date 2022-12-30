@@ -7,13 +7,13 @@ from bsag import BaseStepDefinition
 from bsag.bsagio import BSAGIO
 from bsag.steps.gradescope import METADATA_KEY, Results, SubmissionMetadata, TestCaseStatusEnum, TestResult
 from bsag.utils.subprocesses import run_subprocess
-from pydantic import PositiveInt
+from pydantic import BaseModel, PositiveInt
 
 from ._types import PIECES_KEY, TEST_RESULTS_KEY, AssessmentPieces, BaseJh61bConfig, Jh61bResults
 from .java_utils import path_to_classname
 
 
-class PieceAssessmentConfig:
+class PieceAssessmentConfig(BaseModel):
     java_options: list[str] = []
     command_timeout: PositiveInt | None = None
     require_full_score: bool = False
