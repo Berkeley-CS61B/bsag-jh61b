@@ -14,7 +14,7 @@ from .java_utils import path_to_classname
 
 
 class PieceAssessmentConfig(BaseModel):
-    java_options: list[str] = []
+    java_options: list[str] | None = None
     command_timeout: PositiveInt | None = None
     require_full_score: bool = False
     aggregated_number: str | None = None
@@ -22,6 +22,8 @@ class PieceAssessmentConfig(BaseModel):
 
 class AssessmentConfig(BaseJh61bConfig):
     piece_configs: dict[str, PieceAssessmentConfig] = {}
+    default_java_options: list[str] = []
+    command_timeout: PositiveInt | None = None
 
 
 class Assessment(BaseStepDefinition[AssessmentConfig]):
@@ -62,7 +64,10 @@ class Assessment(BaseStepDefinition[AssessmentConfig]):
                 "bsag.student.name": ",".join(s.name for s in sub_meta.users),
             }
             java_options = [f"-D{k}={v}" for k, v in java_properties.items()]
-            java_options += piece_config.java_options
+            if piece_config.java_options is not None:
+                java_options += piece_config.java_options
+            else:
+                java_options += config.default_java_options
 
             classpath = f"{config.grader_root}:{config.submission_root}:{os.environ.get('CLASSPATH')}"
 
@@ -78,11 +83,16 @@ class Assessment(BaseStepDefinition[AssessmentConfig]):
 
                 bsagio.private.debug("\n" + list2cmdline(assessment_command))
 
+                if piece_config.command_timeout is not None:
+                    timeout = piece_config.command_timeout
+                else:
+                    timeout = config.command_timeout
+
                 # Grader may use relative paths, so use cwd
                 result = run_subprocess(
                     assessment_command,
                     cwd=config.grader_root,
-                    timeout=piece_config.command_timeout,
+                    timeout=timeout,
                 )
                 if result.timed_out:
                     bsagio.private.error(f"timed out while running {assessment_class}")
