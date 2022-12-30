@@ -10,15 +10,16 @@ readme = "README.md"
 python = "^3.10"
 pathspec = "^0.10.2"
 loguru = "^0.6.0"
-pydantic = "^1.10.2"
+pydantic = "^1.10.4"
 devtools = "^0.10.0"
-bsag = {path = "../BSAG"}
+bsag = {git = "https://github.com/Berkeley-CS61B/BSAG.git"}
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
 mypy = "*"
 ruff = "*"
 loguru-mypy = "^0.0.4"
+isort = "^5.11.4"
 
 [build-system]
 requires = ["poetry-core"]
@@ -54,4 +55,4 @@ warn_unused_ignores = false
 
 [tool.ruff]
 line-length = 120
-extend-select = ["UP", "Q"]
+extend-select = ["UP", "Q", "EM", "I", "B", "A", "C4", "ISC", "SIM"]

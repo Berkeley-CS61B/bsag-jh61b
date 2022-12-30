@@ -3,11 +3,10 @@ from pathlib import Path
 from subprocess import list2cmdline
 
 import pathspec
-from pydantic import FilePath, PositiveInt
-
 from bsag import BaseStepConfig, BaseStepDefinition
 from bsag.bsagio import BSAGIO
-from bsag.utils.subprocess import run_subprocess
+from bsag.utils.subprocesses import run_subprocess
+from pydantic import FilePath, PositiveInt
 
 WARNING_MSG_PAT = re.compile(r"^\[ERROR\]\s*(?P<error>.*)")
 

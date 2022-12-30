@@ -2,14 +2,13 @@ import re
 from pathlib import Path
 from subprocess import list2cmdline
 
-from pydantic import PositiveInt
-
 from bsag import BaseStepDefinition
 from bsag.bsagio import BSAGIO
-from .java_utils import class_matches
-from bsag.utils.subprocess import run_subprocess
+from bsag.utils.subprocesses import run_subprocess
+from pydantic import PositiveInt
 
 from ._types import BaseJh61bConfig
+from .java_utils import class_matches
 
 JDEPS_CLASS_DEP_PAT = re.compile(
     r"""

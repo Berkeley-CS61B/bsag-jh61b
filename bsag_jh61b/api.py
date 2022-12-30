@@ -2,14 +2,13 @@ import os
 from pathlib import Path
 from subprocess import list2cmdline
 
-from pydantic import PositiveInt
-
 from bsag import BaseStepDefinition
 from bsag.bsagio import BSAGIO
-from .java_utils import path_to_classname
-from bsag.utils.subprocess import run_subprocess
+from bsag.utils.subprocesses import run_subprocess
+from pydantic import PositiveInt
 
 from ._types import PIECES_KEY, AssessmentPieces, BaseJh61bConfig
+from .java_utils import path_to_classname
 
 
 class ApiCheckConfig(BaseJh61bConfig):
@@ -35,7 +34,7 @@ class ApiCheck(BaseStepDefinition[ApiCheckConfig]):
 
         student_classes: set[str] = set()
         api_files: set[Path] = set()
-        for name, piece in pieces.live_pieces.items():
+        for _name, piece in pieces.live_pieces.items():
             for student_file in piece.student_files:
                 api_file = Path(config.grader_root, student_file.with_stem("AGAPI" + student_file.stem))
                 if api_file.is_file():

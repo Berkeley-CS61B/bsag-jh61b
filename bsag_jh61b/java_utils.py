@@ -19,7 +19,7 @@ def class_matches(pat: str, cl: str) -> bool:
     pat_chunks = pat.strip().split(".")
     cl_chunks = cl.strip().split(".")
 
-    for pat_chunk, cl_chunk in zip(pat_chunks, cl_chunks):
+    for pat_chunk, cl_chunk in zip(pat_chunks, cl_chunks, strict=False):
         if pat_chunk == cl_chunk or pat_chunk == "*":
             continue
         if pat_chunk == "**":

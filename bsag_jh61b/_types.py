@@ -1,9 +1,8 @@
 from pathlib import Path
 
-from pydantic import BaseModel
-
 from bsag import BaseStepConfig
 from bsag.steps.gradescope import TestResult
+from pydantic import BaseModel
 
 PIECES_KEY = "jh61b_pieces"
 TEST_RESULTS_KEY = "jh61b_test_results"
@@ -19,6 +18,7 @@ class FailedPiece(BaseModel):
 
 
 class AssessmentPieces(BaseModel):
+    piece_names: list[str] = []
     live_pieces: dict[str, Piece] = {}
     failed_pieces: dict[str, FailedPiece] = {}
 

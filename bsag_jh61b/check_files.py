@@ -1,10 +1,9 @@
 from pathlib import Path
 from typing import Any
 
-from pydantic import validator
-
 from bsag import BaseStepDefinition
 from bsag.bsagio import BSAGIO
+from pydantic import validator
 
 from ._types import PIECES_KEY, AssessmentPieces, BaseJh61bConfig, FailedPiece, Piece
 
@@ -43,9 +42,10 @@ class CheckFiles(BaseStepDefinition[CheckFilesConfig]):
 
         # Check that required files exist
         for name, piece in config.pieces.items():
+            pieces.piece_names.append(name)
             if all(Path(config.submission_root, f).is_file() for f in piece.student_files):
-                piece.student_files = set(map(lambda f: Path(config.submission_root, f), piece.student_files))
-                piece.assessment_files = set(map(lambda f: Path(config.grader_root, f), piece.assessment_files))
+                piece.student_files = {Path(config.submission_root, f) for f in piece.student_files}
+                piece.assessment_files = {Path(config.grader_root, f) for f in piece.assessment_files}
                 pieces.live_pieces[name] = piece
             else:
                 pieces.failed_pieces[name] = FailedPiece(reason="missing required files")
