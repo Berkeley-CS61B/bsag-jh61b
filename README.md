@@ -43,23 +43,22 @@ An example set of `jh61b` steps might look like
                   - AGTestDebugExercise.java
 # Compile every piece
 - jh61b.compilation
-# use `jdeps` to verify that studnet files don't depend on disallowed libraries
+# use `jdeps` to verify that student files don't depend on disallowed libraries
 # for example, `reflect` can be used to fake behavior under test.
 - jh61b.dep_check:
       disallowed_classes:
           - java.lang.reflect.**
-# Run the assessments.
-# These are currently separate steps because they produce individual logs.
+# Run assessments
 - jh61b.assessment:
-      piece_name: TestIntList
-- jh61b.assessment:
-      piece_name: TestArithmetic
-# This test requires students to pass every test in the file(s) to receive
-# full credit. The aggregation report has gradescope test number "3".
-- jh61b.assessment:
-      piece_name: TestDebugExercise
-      require_full_score: true
-      aggregated_number: 3
+      # Some pieces will have special settings. If a piece isn't special, no
+      # need to specify it.
+      piece_configs:
+          # This test requires students to pass every test in the file(s) to
+          # receive full credit. The aggregation report has gradescope test
+          # number "3".
+          TestDebugExercise
+              require_full_score: true
+              aggregated_number: 3
 # Weight module scores to achieve a total score.
 - jh61b.final_score:
       scoring:
