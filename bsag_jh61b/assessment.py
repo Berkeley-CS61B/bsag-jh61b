@@ -14,7 +14,8 @@ from .java_utils import path_to_classname
 
 
 class PieceAssessmentConfig(BaseModel):
-    java_options: list[str] | None = None
+    java_options: list[str] = []
+    args: list[str] = []
     command_timeout: PositiveInt | None = None
     require_full_score: bool = False
     aggregated_number: str | None = None
@@ -65,8 +66,7 @@ class Assessment(BaseStepDefinition[AssessmentConfig]):
             }
             java_options = [f"-D{k}={v}" for k, v in java_properties.items()]
             java_options += config.default_java_options
-            if piece_config.java_options is not None:
-                java_options += piece_config.java_options
+            java_options += piece_config.java_options
 
             classpath = f"{config.grader_root}:{config.submission_root}:{os.environ.get('CLASSPATH')}"
 
@@ -79,6 +79,7 @@ class Assessment(BaseStepDefinition[AssessmentConfig]):
                 assessment_command = ["java"] + java_options
                 assessment_command += ["-classpath", classpath, assessment_class]
                 assessment_command += ["--secure", "--json", "--outfile", outfile]
+                assessment_command += piece_config.args
 
                 bsagio.private.debug("\n" + list2cmdline(assessment_command))
 
