@@ -1,10 +1,8 @@
 import re
 from pathlib import Path
-from typing import Any
 
 from bsag import BaseStepDefinition
 from bsag.bsagio import BSAGIO
-from pydantic import validator
 
 from ._types import BaseJh61bConfig
 
@@ -12,17 +10,6 @@ from ._types import BaseJh61bConfig
 class MagicWordConfig(BaseJh61bConfig):
     magic_word_path: Path = Path("magic_word.txt")
     magic_word_regex: str | list[str] = []
-
-    @validator("magic_word_regex")
-    def magic_word__regex_mutually_exclusive(
-        cls,
-        magic_word_regex: list[str],
-        values: dict[str, Any],
-    ) -> list[str]:
-        if values["magic_word"] and magic_word_regex:
-            msg = "`magic_word` and `magic_word_regex` cannot both be set"
-            raise ValueError(msg)
-        return magic_word_regex
 
 
 class MagicWord(BaseStepDefinition[MagicWordConfig]):
