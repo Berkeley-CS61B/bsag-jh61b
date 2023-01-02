@@ -64,10 +64,9 @@ class Assessment(BaseStepDefinition[AssessmentConfig]):
                 "bsag.student.name": ",".join(s.name for s in sub_meta.users),
             }
             java_options = [f"-D{k}={v}" for k, v in java_properties.items()]
+            java_options += config.default_java_options
             if piece_config.java_options is not None:
                 java_options += piece_config.java_options
-            else:
-                java_options += config.default_java_options
 
             classpath = f"{config.grader_root}:{config.submission_root}:{os.environ.get('CLASSPATH')}"
 
