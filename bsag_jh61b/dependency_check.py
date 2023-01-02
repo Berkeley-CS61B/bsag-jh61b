@@ -46,7 +46,7 @@ class DepCheck(BaseStepDefinition[DepCheckConfig]):
             "--multi-release",
             "base",
             "-verbose:class",
-            Path(config.submission_root, "**.class"),
+            config.submission_root,
         ]
         bsagio.private.debug("\n" + list2cmdline(jdeps_commmand))
         jdeps_result = run_subprocess(jdeps_commmand, timeout=config.command_timeout)
