@@ -37,6 +37,7 @@ class MagicWord(BaseStepDefinition[MagicWordConfig]):
             contents = f.read().strip()
             if not contents:
                 bsagio.both.error(f"{config.magic_word_path} was empty!")
+                return False
 
             bsagio.both.info(f"Found magic word {contents}")
             for pattern in magic_word_regex:
