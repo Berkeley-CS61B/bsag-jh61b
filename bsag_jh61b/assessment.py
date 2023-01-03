@@ -100,14 +100,27 @@ class Assessment(BaseStepDefinition[AssessmentConfig]):
                         f"Your submission timed out on the test suite {assessment_class}.\n"
                         "Please make sure your code terminates on all inputs, and doesn't take too long to do so."
                     )
-                    return False
-                if result.return_code > 128 or result.return_code < 0:
+                    all_success = False
+                    continue
+                # This won't execute just due to tests failing. `jh61b` is a test harness that wraps those failures.
+                # Instead, we get a bad return code if:
+                # - The test was killed by external timeout (see above)
+                # - The JVM killed the test due to heap memory
+                # - The harness itself errors (unlikely)
+                # - The test or code under test calls `System.exit` (likely)
+                if result.return_code != 0:
+                    all_success = False
                     bsagio.private.error(f"process died with code {result.return_code} running {assessment_class}")
-                    bsagio.student.error(
-                        f"Your submission failed to complete on the test suite {assessment_class}.\n"
-                        "You're most likely using too much memory."
-                    )
-                    return False
+                    if result.return_code > 128 or result.return_code < 0:
+                        bsagio.student.error(
+                            f"Your submission failed to complete on the test suite {assessment_class}.\n"
+                            "You're most likely using too much memory."
+                        )
+                    else:
+                        # If we got system.err'd, expose the output.
+                        bsagio.student.error(f"In piece {piece_name}, test {assessment_class} exited with an error:")
+                        bsagio.student.error(result.output)
+                    continue
 
                 # jh61b produces an entire Results, but we may have multiple Assessments.
                 try:
