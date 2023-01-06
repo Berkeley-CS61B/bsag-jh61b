@@ -157,7 +157,9 @@ class Assessment(BaseStepDefinition[AssessmentConfig]):
                     if test.score != test.max_score:
                         test.status = TestCaseStatusEnum.FAILED
                         failed_tests.append(
-                            "- " + (test.number if test.number else "") + (test.name if test.name else "Unnamed test")
+                            "- "
+                            + (test.number + ") " if test.number else "")
+                            + (test.name if test.name else "Unnamed test")
                         )
                     test.score = None
                     test.max_score = None
@@ -167,6 +169,7 @@ class Assessment(BaseStepDefinition[AssessmentConfig]):
                 ]
                 if failed_tests:
                     output_chunks.append("Failing the following tests:")
+                    output_chunks.append("")
                     output_chunks.extend(failed_tests)
 
                 test_results.insert(
