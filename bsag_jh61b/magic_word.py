@@ -23,7 +23,7 @@ class MagicWord(BaseStepDefinition[MagicWordConfig]):
 
     @classmethod
     def run(cls, bsagio: BSAGIO, config: MagicWordConfig) -> bool:
-        magic_word_file = Path(config.submission_root, config.magic_word_path)
+        magic_word_file = Path(config.submission_root, config.magic_word_path).resolve()
 
         magic_word_regex = config.magic_word_regex
         if type(magic_word_regex) is str:
