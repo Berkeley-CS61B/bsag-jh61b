@@ -47,7 +47,7 @@ class CheckStyle(BaseStepDefinition[CheckStyleConfig]):
             else:
                 style_command += ["com.puppycrawl.tools.checkstyle.Main"]
             style_command += ["-c", config.checkstyle_xml_path, file]
-            bsagio.both.debug("\n" + list2cmdline(style_command))
+            bsagio.private.debug("\n" + list2cmdline(style_command))
             style_result = run_subprocess(style_command, timeout=config.command_timeout)
             if style_result.timed_out:
                 bsagio.both.error(f"Timed out while style-checking {file}.")
