@@ -12,7 +12,7 @@ WARNING_MSG_PAT = re.compile(r"^\[ERROR\]\s*(?P<error>.*)")
 
 
 class CheckStyleConfig(BaseStepConfig):
-    checkstyle_jar_path: FilePath
+    checkstyle_jar_path: FilePath | None
     checkstyle_xml_path: FilePath
     submission_root: Path
     pathspec: list[str] = ["*.java"]
@@ -41,14 +41,12 @@ class CheckStyle(BaseStepDefinition[CheckStyleConfig]):
         total_errors = 0
         # Run checkstyle separately for each file, because if checkstyle finds a syntax error, it halts entirely.
         for file in files:
-            style_command: list[str | Path] = [
-                "java",
-                "-jar",
-                config.checkstyle_jar_path,
-                "-c",
-                config.checkstyle_xml_path,
-                file,
-            ]
+            style_command: list[str | Path] = ["java"]
+            if config.checkstyle_jar_path:
+                style_command += ["-jar", config.checkstyle_jar_path]
+            else:
+                style_command += ["com.puppycrawl.tools.checkstyle.Main"]
+            style_command += ["-c", config.checkstyle_xml_path, file]
             bsagio.both.debug("\n" + list2cmdline(style_command))
             style_result = run_subprocess(style_command, timeout=config.command_timeout)
             if style_result.timed_out:
