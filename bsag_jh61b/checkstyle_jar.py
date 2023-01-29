@@ -22,7 +22,7 @@ class CheckStyleConfig(BaseStepConfig):
 class CheckStyle(BaseStepDefinition[CheckStyleConfig]):
     @staticmethod
     def name() -> str:
-        return "checkstyle"
+        return "jh61b.checkstyle"
 
     @classmethod
     def display_name(cls, config: CheckStyleConfig) -> str:
