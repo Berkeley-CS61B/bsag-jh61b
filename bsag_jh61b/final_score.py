@@ -45,11 +45,9 @@ class FinalScore(BaseStepDefinition[FinalScoreConfig]):
 
         # Reweight scores
         total_weight = sum(config.scoring.values())
-        seen_weight = 0
         weighted_scores: dict[str, Score] = {}
         for piece, score in subscores.items():
             weight = config.scoring.get(piece, 0)
-            seen_weight += weight
             max_subscore = weight / total_weight * config.max_points
             weighted_scores[piece] = Score(score * max_subscore, max_subscore)
 
@@ -64,7 +62,6 @@ class FinalScore(BaseStepDefinition[FinalScoreConfig]):
             )
 
         total_score = sum(scores[0] for scores in weighted_scores.values())
-        total_score *= seen_weight / total_weight
         total_score *= config.scale_factor
         total_score = min(config.max_points, total_score)
 
