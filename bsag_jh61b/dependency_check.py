@@ -41,6 +41,8 @@ class DepCheck(BaseStepDefinition[DepCheckConfig]):
 
     @classmethod
     def run(cls, bsagio: BSAGIO, config: DepCheckConfig) -> bool:
+        bsagio.both.info("Running illegal dependency check.")
+        
         jdeps_commmand: list[str | Path] = [
             "jdeps",
             "--multi-release",
