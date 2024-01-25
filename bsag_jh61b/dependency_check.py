@@ -55,8 +55,13 @@ class DepCheck(BaseStepDefinition[DepCheckConfig]):
         if jdeps_result.timed_out:
             bsagio.both.error("Timed out during illegal dependency check.")
             return False
-
+        
         passed = True
+
+
+        # Allowed classes take precedence.
+        # If a class is both disallowed and allowed, the dependency check will still pass.
+
         for line in jdeps_result.output.splitlines():
             match = re.match(JDEPS_CLASS_DEP_PAT, line)
             if match is None:
@@ -64,18 +69,14 @@ class DepCheck(BaseStepDefinition[DepCheckConfig]):
             student_class: str = match.group("class")
             dep_target: str = match.group("dep")
 
-            is_ok = False
-            efficient_allowed_classes = set(config.allowed_classes)
-            for allowed_pat in config.allowed_classes:
-                if class_matches(allowed_pat, dep_target):
-                    is_ok = True
-                    break
+            ok_classes = set(config.allowed_classes)
+            
             for disallowed_pat in config.disallowed_classes:
-                if class_matches(disallowed_pat, dep_target) and not disallowed_pat in efficient_allowed_classes:
-                    is_ok = False
+                if class_matches(disallowed_pat, dep_target) and not disallowed_pat in ok_classes:
+                    passed = False
                     break
-            if not is_ok:
-                passed = False
+            
+            if not passed:
                 bsagio.student.error(f"Class {student_class} has illegal dependency {dep_target}")
 
         return passed
