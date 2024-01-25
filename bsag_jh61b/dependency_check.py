@@ -65,12 +65,13 @@ class DepCheck(BaseStepDefinition[DepCheckConfig]):
             dep_target: str = match.group("dep")
 
             is_ok = False
+            efficient_allowed_classes = set(config.allowed_classes)
             for allowed_pat in config.allowed_classes:
                 if class_matches(allowed_pat, dep_target):
                     is_ok = True
                     break
             for disallowed_pat in config.disallowed_classes:
-                if class_matches(disallowed_pat, dep_target):
+                if class_matches(disallowed_pat, dep_target) and not disallowed_pat in efficient_allowed_classes:
                     is_ok = False
                     break
             if not is_ok:
