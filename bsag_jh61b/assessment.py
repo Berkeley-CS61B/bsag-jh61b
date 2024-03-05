@@ -110,7 +110,10 @@ class Assessment(BaseStepDefinition[AssessmentConfig]):
                 # - The test or code under test calls `System.exit` (likely)
                 if result.return_code != 0:
                     all_success = False
-                    bsagio.private.error(f"process died with code {result.return_code} running {assessment_class}")
+                    bsagio.private.error(f"process died with code {result.return_code} running {assessment_class}:")
+                    bsagio.private.error(f"stdout: {result.output}")
+                    bsagio.private.error(f"stderr: {result.stderr}")
+                    bsagio.private.error(f"timed_out: {result.timed_out}")
                     if result.return_code > 128 or result.return_code < 0:
                         bsagio.student.error(
                             f"Your submission failed to complete on the test suite {assessment_class}.\n"
