@@ -40,7 +40,25 @@ class CheckFiles(BaseStepDefinition[CheckFilesConfig]):
     def run(cls, bsagio: BSAGIO, config: CheckFilesConfig) -> bool:
         pieces = AssessmentPieces()
 
-        # Check that required files exist
+        # First, check if the submission directory itself exists.
+        if not config.submission_root.is_dir():
+            bsagio.both.error(f"Submission directory not found: {config.submission_root}")
+            
+            # For extra debugging help, show what IS in the parent submission folder
+            submission_parent = Path("/autograder/submission")
+            if submission_parent.is_dir():
+                contents = [p.name for p in submission_parent.iterdir()]
+                bsagio.both.info(f"Contents of {submission_parent}: {contents}")
+            
+            # Fail all pieces because the root directory is missing
+            pieces = AssessmentPieces()
+            for name in config.pieces:
+                pieces.piece_names.append(name)
+                pieces.failed_pieces[name] = FailedPiece(reason="submission directory not found")
+            bsagio.data[PIECES_KEY] = pieces
+            return False
+        
+        # Now that we've established that the submission directory exists, heck that required files exist
         for name, piece in config.pieces.items():
             pieces.piece_names.append(name)
             if all(Path(config.submission_root, f).is_file() for f in piece.student_files):
