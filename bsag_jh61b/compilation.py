@@ -33,6 +33,7 @@ class Compilation(BaseStepDefinition[CompilationConfig]):
             compile_command: list[str | Path] = ["javac", "-encoding", "utf8", "-g"]
             compile_command.extend(["-sourcepath", f"{config.grader_root}:{config.submission_root}"])
             compile_command.extend(config.compile_flags)
+            compile_command.extend(piece.student_files) # to allow for reflection based tests that may not compile the student files
             compile_command.extend(piece.assessment_files)
             bsagio.private.debug("\n" + list2cmdline(compile_command))
 
