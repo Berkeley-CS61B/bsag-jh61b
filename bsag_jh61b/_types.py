@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Union
 
 from bsag import BaseStepConfig
 from bsag.steps.gradescope import TestResult
@@ -26,12 +25,7 @@ class AssessmentPieces(BaseModel):
 
 class BaseJh61bConfig(BaseStepConfig):
     grader_root: Path
-    submission_root: Union[Path, list[Path]]
-    
-    def get_submission_roots(self) -> list[Path]:
-        if isinstance(self.submission_root, Path):
-            return [self.submission_root]
-        return self.submission_root
+    submission_root: Path
 
 
 class Jh61bResults(BaseModel):

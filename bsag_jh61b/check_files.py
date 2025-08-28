@@ -39,12 +39,10 @@ class CheckFiles(BaseStepDefinition[CheckFilesConfig]):
     @classmethod
     def run(cls, bsagio: BSAGIO, config: CheckFilesConfig) -> bool:
         pieces = AssessmentPieces()
-        submission_roots = config.get_submission_roots()
 
-        # First, check if at least one submission directory exists.
-        valid_roots = [root for root in submission_roots if root.is_dir()]
-        if not valid_roots:
-            bsagio.both.error(f"No submission directories found. Tried: {[str(r) for r in submission_roots]}")
+        # First, check if the submission directory itself exists.
+        if not config.submission_root.is_dir():
+            bsagio.both.error(f"Submission directory not found: {config.submission_root}")
             
             # For extra debugging help, show what IS in the parent submission folder
             submission_parent = Path("/autograder/submission")
@@ -52,38 +50,27 @@ class CheckFiles(BaseStepDefinition[CheckFilesConfig]):
                 contents = [p.name for p in submission_parent.iterdir()]
                 bsagio.both.info(f"Contents of {submission_parent}: {contents}")
             
-            # Fail all pieces because no root directory exists
+            # Fail all pieces because the root directory is missing
             pieces = AssessmentPieces()
             for name in config.pieces:
                 pieces.piece_names.append(name)
-                pieces.failed_pieces[name] = FailedPiece(reason="no submission directory found")
+                pieces.failed_pieces[name] = FailedPiece(reason="submission directory not found")
             bsagio.data[PIECES_KEY] = pieces
             return False
         
-        # Now check each piece against all valid submission roots
+        # Now that we've established that the submission directory exists, heck that required files exist
         for name, piece in config.pieces.items():
             pieces.piece_names.append(name)
-            found_root = None
-            
-            # Try each valid submission root until we find all required files
-            for root in valid_roots:
-                if all(Path(root, f).is_file() for f in piece.student_files):
-                    found_root = root
-                    break
-            
-            if found_root:
-                piece.student_files = {Path(found_root, f) for f in piece.student_files}
+            if all(Path(config.submission_root, f).is_file() for f in piece.student_files):
+                piece.student_files = {Path(config.submission_root, f) for f in piece.student_files}
                 piece.assessment_files = {Path(config.grader_root, f) for f in piece.assessment_files}
                 pieces.live_pieces[name] = piece
             else:
                 pieces.failed_pieces[name] = FailedPiece(reason="missing required files")
-                bsagio.both.error(f"Missing required files for assessment {name} in all submission roots:")
-                for root in valid_roots:
-                    bsagio.both.error(f"  In {root}:")
-                    for file in piece.student_files:
-                        file_path = Path(root, file)
-                        status = "✓" if file_path.is_file() else "✗"
-                        bsagio.both.error(f"    {status} {file}")
+                bsagio.both.error(f"Missing required files for assessment {name}:")
+                for file in piece.student_files:
+                    if not file.is_file():
+                        bsagio.both.error(f"- {file}")
 
         bsagio.data[PIECES_KEY] = pieces
 
