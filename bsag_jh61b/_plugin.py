@@ -11,7 +11,6 @@ from .final_score import FinalScore
 from .magic_word import MagicWord
 from .motd import Motd
 from .copy_from_alternate_root import CopyFromAlternateRoot
-from .lateness_penalty import LatenessPenalty
 
 
 @hookimpl  # type: ignore
@@ -25,7 +24,6 @@ def bsag_load_step_defs() -> list[type[ParamBaseStep]]:
         CopyFromAlternateRoot,        
         DepCheck,
         FinalScore,
-        LatenessPenalty,
         MagicWord,
         Motd,
     ]
