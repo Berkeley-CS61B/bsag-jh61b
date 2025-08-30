@@ -3,7 +3,7 @@ import math
 
 from bsag import BaseStepConfig, BaseStepDefinition
 from bsag.bsagio import BSAGIO
-from bsag.steps.gradescope import RESULTS_KEY, Results
+from bsag.steps.gradescope import METADATA_KEY, RESULTS_KEY, Results, SubmissionMetadata
 
 
 class LatenessPenaltyConfig(BaseStepConfig):
@@ -24,25 +24,17 @@ class LatenessPenalty(BaseStepDefinition[LatenessPenaltyConfig]):
     def run(cls, bsagio: BSAGIO, config: LatenessPenaltyConfig) -> bool:
         res: Results = bsagio.data[RESULTS_KEY]
         
-        # Get submission info from gradescope
-        submission_info = bsagio.data.get("gradescope_submission_metadata", {})
+        # Get submission metadata from gradescope
+        submission_metadata = bsagio.data.get(METADATA_KEY)
         
-        if not submission_info:
+        if not submission_metadata:
             bsagio.private.warning("No submission metadata found - cannot calculate lateness penalty")
             return True
             
-        # Extract submission time and due date
-        submission_time_str = submission_info.get("created_at")
-        due_date_str = submission_info.get("assignment", {}).get("due_date")
-        
-        if not submission_time_str or not due_date_str:
-            bsagio.private.warning("Missing submission time or due date - cannot calculate lateness penalty")
-            return True
-            
         try:
-            # Parse timestamps (assuming ISO format)
-            submission_time = datetime.fromisoformat(submission_time_str.replace('Z', '+00:00'))
-            due_date = datetime.fromisoformat(due_date_str.replace('Z', '+00:00'))
+            # Extract submission time and due date from SubmissionMetadata object
+            submission_time = submission_metadata.created_at
+            due_date = submission_metadata.users[0].assignment.due_date
             
             # Calculate lateness
             time_diff = submission_time - due_date
