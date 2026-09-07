@@ -9,7 +9,9 @@ from bsag.steps.gradescope import RESULTS_KEY, Results
 from bsag.steps.gradescope._types import VisibilityEnum
 from pydantic import Field, PositiveInt
 
-from .provenance_verify import DEFAULT_MAX_FILE_BYTES, Report, verify_assignment
+from .io import DEFAULT_MAX_FILE_BYTES
+from .types import Report
+from .verify import verify_assignment
 
 PROVENANCE_REPORT_KEY = "jh61b_provenance_report"
 SCOPE_BOUNDARY = "Checks concern recording integrity only, submitted-code matching and behavior are not evaluated."

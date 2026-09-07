@@ -6,8 +6,8 @@ from unittest.mock import Mock, patch
 
 from bsag.steps.gradescope import RESULTS_KEY, Results
 
-from bsag_jh61b.provenance import PROVENANCE_REPORT_KEY, Provenance, ProvenanceConfig
-from bsag_jh61b.provenance_verify import CHECKS, verify_assignment
+from bsag_jh61b.provenance.step import PROVENANCE_REPORT_KEY, Provenance, ProvenanceConfig
+from bsag_jh61b.provenance.verify import CHECKS, verify_assignment
 
 
 class StructuralTests(unittest.TestCase):
@@ -163,7 +163,7 @@ class StructuralTests(unittest.TestCase):
             expected_manifest=self.root.parent / "unused",
             checks=list(CHECKS),
         )
-        with patch("bsag_jh61b.provenance._expected_signature", return_value="unused"):
+        with patch("bsag_jh61b.provenance.step._expected_signature", return_value="unused"):
             self.assertFalse(Provenance.run(io, config))
         self.assertTrue(config.halt_on_fail)
         self.assertEqual(io.data[PROVENANCE_REPORT_KEY].outcome, "flagged")

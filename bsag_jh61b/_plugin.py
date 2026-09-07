@@ -10,7 +10,7 @@ from .dependency_check import DepCheck
 from .final_score import FinalScore
 from .magic_word import MagicWord
 from .motd import Motd
-from .provenance import Provenance
+from .provenance.step import Provenance
 from .copy_from_alternate_root import CopyFromAlternateRoot
 
 

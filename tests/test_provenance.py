@@ -23,16 +23,10 @@ from loguru import logger
 
 from bsag_jh61b._types import TEST_RESULTS_KEY, Jh61bResults
 from bsag_jh61b.final_score import FinalScore, FinalScoreConfig
-from bsag_jh61b.provenance import PROVENANCE_REPORT_KEY, Provenance, ProvenanceConfig
-from bsag_jh61b.provenance_verify import (
-    CHECKS,
-    CheckResult,
-    Finding,
-    Report,
-    SubmissionReader,
-    VerificationUnavailable,
-    verify_assignment,
-)
+from bsag_jh61b.provenance.io import SubmissionReader
+from bsag_jh61b.provenance.step import PROVENANCE_REPORT_KEY, Provenance, ProvenanceConfig
+from bsag_jh61b.provenance.types import CheckResult, Finding, Report, VerificationUnavailable
+from bsag_jh61b.provenance.verify import CHECKS, verify_assignment
 
 PACKAGE = Path(__file__).resolve().parents[1]
 COURSE = PACKAGE.parent / "course-materials-fa26"
@@ -274,7 +268,7 @@ class ProvenanceTests(unittest.TestCase):
         for report, expected_return, success in cases:
             with self.subTest(outcome=report.outcome):
                 io = self.io()
-                with patch("bsag_jh61b.provenance.verify_assignment", return_value=report):
+                with patch("bsag_jh61b.provenance.step.verify_assignment", return_value=report):
                     self.assertEqual(Provenance.run(io, self.config.copy(update={"checks": ["fake"]})), expected_return)
                 self.assertEqual(io.student.success.called, success)
                 self.assertNotIn("private detail", str(io.student.mock_calls))
@@ -283,7 +277,7 @@ class ProvenanceTests(unittest.TestCase):
 
     def test_checker_exception_defaults_to_fail_open(self):
         io = self.io()
-        with patch("bsag_jh61b.provenance.verify_assignment", side_effect=RuntimeError("test")):
+        with patch("bsag_jh61b.provenance.step.verify_assignment", side_effect=RuntimeError("test")):
             self.assertTrue(Provenance.run(io, self.config))
             self.assertFalse(Provenance.run(io, self.config.copy(update={"fail_open": False})))
         self.assertTrue(self.config.halt_on_fail)
@@ -368,7 +362,7 @@ class ProvenanceTests(unittest.TestCase):
             )
         )
         grader = BSAG(str(path), step_defs=[Seed])
-        with patch("bsag_jh61b.provenance.verify_assignment", return_value=report):
+        with patch("bsag_jh61b.provenance.step.verify_assignment", return_value=report):
             grader.run()
         result = json.loads(output.read_text())
         self.assertEqual(result["score"], 75)
