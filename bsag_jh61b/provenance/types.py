@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
+    from .content import Content
+    from .crypto import Signatures
     from .io import SubmissionReader
 
 Outcome = Literal["passed", "flagged", "not_evaluated", "error"]
@@ -74,9 +76,22 @@ class FileStructure:
 class VerificationContext:
     assignment_root: Path
     assignment_id: str
-    expected_sig: str
+    expected_manifest: dict | None
     scopes: tuple[Path, ...]
     reader: SubmissionReader = field(repr=False)
+    root_public_key: str | None = None
+
+    @cached_property
+    def content(self) -> Content:
+        from .content import load_content
+
+        return load_content(self)
+
+    @cached_property
+    def signatures(self) -> Signatures:
+        from .crypto import verify_signatures
+
+        return verify_signatures(self)
 
     @cached_property
     def structure(self) -> FileStructure:

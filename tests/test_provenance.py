@@ -31,6 +31,7 @@ from bsag_jh61b.provenance.verify import CHECKS, verify_assignment
 PACKAGE = Path(__file__).resolve().parents[1]
 COURSE = PACKAGE.parent / "course-materials-fa26"
 SIGNATURE = "ab" * 64
+EXPECTED = {"course_id": "course", "assignment_id": "proj0", "semester": "fa26"}
 
 
 class ProvenanceTests(unittest.TestCase):
@@ -64,9 +65,9 @@ class ProvenanceTests(unittest.TestCase):
         return io
 
     def test_empty_selection_never_claims_verification(self):
-        self.assertEqual(set(CHECKS), {"invalid_structure", "missing_files", "unexpected_file"})
+        self.assertEqual(len(CHECKS), 8)
         self.scope()
-        report = verify_assignment(self.root, "proj0", SIGNATURE)
+        report = verify_assignment(self.root, "proj0", EXPECTED)
         self.assertEqual(report.outcome, "not_evaluated")
         self.assertEqual(report.scopes, (".provenance",))
         self.assertEqual(report.flags, ())
@@ -78,7 +79,7 @@ class ProvenanceTests(unittest.TestCase):
         self.assertEqual(io.data[RESULTS_KEY].stdout_visibility, "hidden")
 
     def test_no_absence_flag_when_no_checks_selected(self):
-        report = verify_assignment(self.root, "proj0", SIGNATURE)
+        report = verify_assignment(self.root, "proj0", EXPECTED)
         self.assertEqual(report.scopes, ())
         self.assertEqual(report.flags, ())
         self.assertEqual(report.outcome, "not_evaluated")
@@ -89,13 +90,13 @@ class ProvenanceTests(unittest.TestCase):
         (self.root.parent / ".provenance").mkdir()
         (self.root.parent / "hw02" / ".provenance").mkdir(parents=True)
         with patch("os.scandir", side_effect=AssertionError("Must not walk the submission")):
-            report = verify_assignment(self.root, "proj0", SIGNATURE)
+            report = verify_assignment(self.root, "proj0", EXPECTED)
         self.assertEqual(report.scopes, (".provenance",))
 
     def test_no_fallback_to_other_recordings(self):
         self.scope("nested/.provenance")
         (self.root.parent / ".provenance").mkdir()
-        report = verify_assignment(self.root, "proj0", SIGNATURE)
+        report = verify_assignment(self.root, "proj0", EXPECTED)
         self.assertEqual(report.scopes, ())
         self.assertEqual(report.outcome, "not_evaluated")
 
@@ -104,13 +105,13 @@ class ProvenanceTests(unittest.TestCase):
         (scope / "manifest.json").write_bytes(b"not JSON")
         (scope / "session-fake.slog").write_bytes(b"broken log")
         (scope / "unexpected.txt").write_bytes(b"anything")
-        report = verify_assignment(self.root, "proj0", SIGNATURE)
+        report = verify_assignment(self.root, "proj0", EXPECTED)
         self.assertEqual(report.outcome, "not_evaluated")
         self.assertEqual(report.flags, ())
 
     def test_non_directory_recording_path_is_unavailable(self):
         (self.root / ".provenance").write_text("not a directory")
-        self.assertEqual(verify_assignment(self.root, "proj0", SIGNATURE).outcome, "error")
+        self.assertEqual(verify_assignment(self.root, "proj0", EXPECTED).outcome, "error")
 
     def test_raw_bytes_preserved_and_repeated_reads_allowed(self):
         path = self.scope() / "log.slog"
@@ -194,7 +195,7 @@ class ProvenanceTests(unittest.TestCase):
         self.scope()
 
         def flagged(context):
-            self.assertEqual(context.expected_sig, SIGNATURE)
+            self.assertEqual(context.expected_manifest, EXPECTED)
             self.assertEqual(context.assignment_id, "proj0")
             self.assertEqual(context.scopes, (self.root / ".provenance",))
             return CheckResult("fake", "flagged", findings=(Finding("fake", "test evidence"),))
@@ -206,7 +207,7 @@ class ProvenanceTests(unittest.TestCase):
         report = verify_assignment(
             self.root,
             "proj0",
-            SIGNATURE,
+            EXPECTED,
             checks=["fake", "broken"],
             registry={"fake": flagged, "broken": broken},
         )
@@ -219,10 +220,10 @@ class ProvenanceTests(unittest.TestCase):
         registry = {"fake": callback}
         for checks in (["unknown"], ["fake", "fake"]):
             with self.subTest(checks=checks), self.assertRaises(VerificationUnavailable):
-                verify_assignment(self.root, "proj0", SIGNATURE, checks=checks, registry=registry)
-        report = verify_assignment(self.root, "proj0", SIGNATURE, checks=["fake"], registry=registry)
+                verify_assignment(self.root, "proj0", EXPECTED, checks=checks, registry=registry)
+        report = verify_assignment(self.root, "proj0", EXPECTED, checks=["fake"], registry=registry)
         self.assertEqual(report.outcome, "not_evaluated")
-        report = verify_assignment(self.root, "proj0", SIGNATURE, checks=["other"], registry={"other": callback})
+        report = verify_assignment(self.root, "proj0", EXPECTED, checks=["other"], registry={"other": callback})
         self.assertEqual(report.outcome, "error")
 
     def test_invalid_check_result_contract(self):
@@ -232,6 +233,7 @@ class ProvenanceTests(unittest.TestCase):
             CheckResult("fake", "passed", findings=(Finding("fake", "bad"),))
 
     def test_trusted_manifest_failures_are_inside_fail_open(self):
+        self.config.checks = ["recording_binding_mismatch"]
         for content in (b"not json", b"{}", json.dumps({"assignment_id": "wrong", "sig": SIGNATURE}).encode()):
             self.manifest.write_bytes(content)
             io = self.io()
@@ -247,6 +249,7 @@ class ProvenanceTests(unittest.TestCase):
         self.assertEqual(io.data[PROVENANCE_REPORT_KEY].outcome, "error")
 
     def test_untrusted_expected_manifest_refused(self):
+        self.config.checks = ["recording_binding_mismatch"]
         path = self.root / "manifest"
         path.write_bytes(self.manifest.read_bytes())
         io = self.io()

@@ -7,7 +7,9 @@ from unittest.mock import Mock, patch
 from bsag.steps.gradescope import RESULTS_KEY, Results
 
 from bsag_jh61b.provenance.step import PROVENANCE_REPORT_KEY, Provenance, ProvenanceConfig
-from bsag_jh61b.provenance.verify import CHECKS, verify_assignment
+from bsag_jh61b.provenance.verify import verify_assignment
+
+CHECKS = ("invalid_structure", "missing_files", "unexpected_file")
 
 
 class StructuralTests(unittest.TestCase):
@@ -28,7 +30,7 @@ class StructuralTests(unittest.TestCase):
             (self.recording / name).write_bytes(b"")
 
     def report(self, checks=tuple(CHECKS)):
-        return verify_assignment(self.root, "test", "unused", checks=checks)
+        return verify_assignment(self.root, "test", checks=checks)
 
     def test_complete_structure_without_reading_contents_or_matching_log_and_seal_ids(self):
         with (
@@ -163,8 +165,7 @@ class StructuralTests(unittest.TestCase):
             expected_manifest=self.root.parent / "unused",
             checks=list(CHECKS),
         )
-        with patch("bsag_jh61b.provenance.step._expected_signature", return_value="unused"):
-            self.assertFalse(Provenance.run(io, config))
+        self.assertFalse(Provenance.run(io, config))
         self.assertTrue(config.halt_on_fail)
         self.assertEqual(io.data[PROVENANCE_REPORT_KEY].outcome, "flagged")
         self.assertNotIn("extra.txt", str(io.student.mock_calls))

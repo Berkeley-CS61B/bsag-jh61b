@@ -10,6 +10,8 @@ readme = "README.md"
 python = "^3.10"
 pathspec = "^0.10.2"
 pydantic = "^1.10.4"
+cryptography = ">=46,<51"
+rfc8785 = "^0.1.4"
 bsag = {git = "https://github.com/Berkeley-CS61B/BSAG.git"}
 
 [tool.poetry.group.dev.dependencies]

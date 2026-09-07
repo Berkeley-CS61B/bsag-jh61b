@@ -1,5 +1,4 @@
 import json
-import re
 from dataclasses import asdict
 from pathlib import Path
 
@@ -9,6 +8,8 @@ from bsag.steps.gradescope import RESULTS_KEY, Results
 from bsag.steps.gradescope._types import VisibilityEnum
 from pydantic import Field, PositiveInt
 
+from .content import hex_string, manifest_shape
+from .crypto import manifest_signatures
 from .io import DEFAULT_MAX_FILE_BYTES
 from .types import Report
 from .verify import verify_assignment
@@ -20,14 +21,18 @@ SCOPE_BOUNDARY = "Checks concern recording integrity only, submitted-code matchi
 class ProvenanceConfig(BaseStepConfig):
     halt_on_fail: bool = True
     assignment_id: str = Field(min_length=1)
-    expected_manifest: Path
+    expected_manifest: Path | None = None
+    root_public_key: str | None = None
     assignment_root: Path
     checks: list[str] = Field(default_factory=list)
     fail_open: bool = True
     max_file_bytes: PositiveInt = DEFAULT_MAX_FILE_BYTES
 
 
-def _expected_signature(config: ProvenanceConfig) -> str:
+def _expected_manifest(config: ProvenanceConfig) -> dict:
+    if config.expected_manifest is None:
+        msg = "expected_manifest is required for assignment binding and signature checks"
+        raise ValueError(msg)
     path = config.expected_manifest.resolve(strict=True)
     if path.is_relative_to(config.assignment_root.resolve()):
         msg = "expected_manifest must be outside the student submission"
@@ -41,11 +46,22 @@ def _expected_signature(config: ProvenanceConfig) -> str:
     if not isinstance(manifest, dict) or manifest.get("assignment_id") != config.assignment_id:
         msg = "Trusted manifest assignment_id does not match the configured assignment"
         raise ValueError(msg)
-    signature = manifest.get("sig")
-    if not isinstance(signature, str) or re.fullmatch(r"[0-9a-fA-F]{128}", signature) is None:
-        msg = "Trusted manifest has no valid Ed25519 signature encoding"
+    if any(not isinstance(manifest.get(key), str) or not manifest[key] for key in ("course_id", "semester")):
+        msg = "Trusted manifest must identify the expected course and semester"
         raise ValueError(msg)
-    return signature
+    signature_checks = {"invalid_signature", "log_bytes_mismatch"}
+    if signature_checks.intersection(config.checks):
+        if not hex_string(config.root_public_key, 64):
+            msg = "Set the production root_public_key before enabling signature checks"
+            raise ValueError(msg)
+        manifest_shape(manifest)
+        if manifest_signatures(manifest, config.root_public_key):
+            msg = "The trusted staff manifest does not verify against root_public_key"
+            raise ValueError(msg)
+        if manifest["course_id"] != manifest["course_cert"]["course_id"]:
+            msg = "The trusted staff manifest and certificate course IDs disagree"
+            raise ValueError(msg)
+    return manifest
 
 
 class Provenance(BaseStepDefinition[ProvenanceConfig]):
@@ -62,13 +78,19 @@ class Provenance(BaseStepDefinition[ProvenanceConfig]):
         results: Results = bsagio.data.setdefault(RESULTS_KEY, Results())
         results.stdout_visibility = VisibilityEnum.HIDDEN
         try:
-            expected_sig = _expected_signature(config)
+            trust_checks = {
+                "recording_binding_mismatch",
+                "invalid_signature",
+                "log_bytes_mismatch",
+            }
+            expected = _expected_manifest(config) if trust_checks.intersection(config.checks) else None
             report = verify_assignment(
                 config.assignment_root,
                 config.assignment_id,
-                expected_sig,
+                expected,
                 checks=config.checks,
                 max_file_bytes=config.max_file_bytes,
+                root_public_key=config.root_public_key,
             )
         except Exception as exc:
             bsagio.private.exception("Provenance infrastructure could not complete")
